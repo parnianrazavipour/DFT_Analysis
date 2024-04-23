@@ -8,7 +8,7 @@ To run the server locally, navigate to the `\Server` directory and execute the f
 ```bash
 docker compose up
 ````
-Once executed, this command sets up the local server, which can then be accessed through the URL [http://127.0.0.1:8000](http://127.0.0.1:8080) in a web browser.
+Once executed, this command sets up the local server, which can then be accessed through the URL http://127.0.0.1:8080 in a web browser.
 
 ## Features
 - Upload audio files for analysis.

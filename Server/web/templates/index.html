@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask App - Signal Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            text-align: left;
+        }
+        h1, h2 {
+            color: #444;
+            margin-left: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: inline-block;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input[type="text"], input[type="number"], input[type="file"], button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        input[type="text"], input[type="number"] {
+            width: 200px; 
+        }
+        #fileInfo {
+            margin-left: 20px;
+            font-size: 16px;
+        }
+        #uploadPlot {
+            margin-top: 20px;
+        }
+        .explanation {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px;
+            font-size: 16px;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script>
+    let uploadedFilename = '';
+    function addWave() {
+        let freq = document.getElementById('freq').value;
+        let rate = document.getElementById('sampling_rate').value;
+        let duration = document.getElementById('duration').value;
+        let weight = document.getElementById('weight').value;
+
+        document.getElementById('addWaveButton').disabled = true;
+
+        $.post('/add_wave', {
+            freq: freq,
+            sampling_rate: rate,
+            duration: duration,
+            weight: weight
+        }, function(data) {
+            alert('Wave added!');
+            document.getElementById('wavesInfo').innerHTML = data.waves_info;
+            document.getElementById('freq').value = '';
+            document.getElementById('sampling_rate').value = '';
+            document.getElementById('duration').value = '';
+            document.getElementById('weight').value = '';
+
+            document.getElementById('addWaveButton').disabled = false;
+        }).fail(function() {
+            alert("Error adding wave");
+            document.getElementById('addWaveButton').disabled = false;
+        });
+    }
+
+
+
+    function resetWaves() {
+        $.post('/reset_waves', function(data) {
+            alert('Waves reset!');
+            document.getElementById('wavesInfo').innerHTML = 'No waves added';
+            document.getElementById('plot').innerHTML = '';  
+            document.getElementById('analyzeSignal').disabled = true;  
+        });
+    }
+
+
+
+    function analyzeSignal() {
+        console.log("meow");
+        window.location.href = '/figures';
+    }
+
+
+    function createSignal() {
+        $.get('/create_signal', function(data) {
+            if(data.success) {
+                var trace = {
+                    y: data.signal,
+                    type: 'scatter',
+                    mode: 'lines'
+                };
+                var layout = {
+                    title: 'Signal Plot',
+                    xaxis: { title: 'Sample Number' },
+                    yaxis: { title: 'Amplitude' }
+                };
+                Plotly.newPlot('plot', [trace], layout);
+                document.getElementById('analyzeSignal').disabled = false;
+            } else {
+                alert(data.error);
+            }
+        });
+    }
+
+    function uploadFile() {
+        var fileInput = document.getElementById('audioFile');
+        if (fileInput.files.length === 0) {
+            alert("Please select a file.");
+            return;
+        }
+        var file = fileInput.files[0];
+        var formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Uploaded file data:", data);
+            uploadedFilename = data.filename;
+            displayUploadedSignal(data.signal, data.sampleRate);
+            document.getElementById('fileInfo').textContent = `Sample Rate: ${data.sampleRate} Hz`;
+            document.body.setAttribute('data-filename', uploadedFilename);
+            
+        }).catch(error => console.error('Error uploading file:', error));
+    }
+
+       function analyzeFile() {
+    var start = document.getElementById('start').value || null;
+    var end = document.getElementById('end').value || null;
+
+    if (!uploadedFilename) {
+        alert("No file has been uploaded.");
+        return;
+    }
+
+    var url = `/process/${uploadedFilename}?start=${start}&end=${end}`;
+    window.location.href = url;
+}
+function displayUploadedSignal(signal, sampleRate) {
+    var traces = [];
+    if (Array.isArray(signal[0])) {  
+        signal.forEach((channelData, index) => {
+            traces.push({
+                y: channelData,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Channel ' + (index + 1)
+            });
+        });
+    } else {
+        traces.push({
+            y: signal,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Uploaded Signal'
+        });
+    }
+
+    var layout = {
+        title: 'Uploaded Audio Signal',
+        xaxis: { title: 'Sample Number' },
+        yaxis: { title: 'Amplitude' }
+    };
+    Plotly.newPlot('uploadPlot', traces, layout);
+}
+
+
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        input, button {
+            margin: 5px;
+        }
+
+        #fileInfo {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Upload File</h2>
+
+    <input type="file" id="audioFile" accept=".wav,.mp3,.flac">
+    <button onclick="uploadFile()">Upload</button>
+    <p id="fileInfo"></p>
+    <div id="uploadPlot"></div>
+
+    <h2>Analyze Uploaded Signal</h2>
+    <p>If the start time and end time fields are left blank, the entire signal will be used as the default range for frequency domain analysis.</p>
+
+    <p>The plots will be displayed upon clicking "Frequency Analysis".</p>
+    <input type="number" id="start" placeholder="Start time (s)">
+    <input type="number" id="end" placeholder="End time (s)">
+    <button onclick="analyzeFile()">Frequency Analysis</button>
+
+    <h2>Create Signal</h2>
+    <p>In this part you can combine several sinusoidal waves! Each component wave is defined as:
+        \[ A(t) = A \times \sin(2\pi f t) \]
+        
+        The final signal is the sum of all individual waves:
+        \[ S(t) = \sum_{i=1}^{n} A_i(t) \]
+        where \( A_i(t) \) is the amplitude of the \( i \)-th wave at time \( t \).
+        
+        After inputting these values, click the "Add Wave" button to stack this wave onto your signal. You can add multiple waves with different or same parameters to create a signal.</p>
+        <p>The final waveform can be created and visualized by pressing "Create Signal", which combines all added waves according to the above formula and displays them on the plot. After that, for Frequency analysis press "Frequency Analysis".
+        .</p>
+    <input type="text" id="freq" placeholder="Frequency (Hz)">
+    <input type="text" id="sampling_rate" placeholder="Sampling Rate (Hz)">
+    <input type="text" id="duration" placeholder="Duration (s)">
+    <input type="text" id="weight" placeholder="Peak Amplitude">
+    <button id="addWaveButton" onclick="addWave()">Add Wave</button>
+    <button onclick="createSignal()">Create Signal</button>
+    <button onclick="analyzeSignal()">Frequency Analysis</button>
+    <button onclick="resetWaves()">Reset Waves</button>
+
+    <div id="wavesInfo">No waves added</div>
+    <div id="plot"></div> 
+</body>
+</html>

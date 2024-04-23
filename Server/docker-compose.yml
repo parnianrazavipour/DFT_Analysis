@@ -1,0 +1,9 @@
+services:
+
+  web:
+    container_name: dft-web
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "8080:8080"

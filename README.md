@@ -4,7 +4,7 @@
 This web application allows users to visualize the Discrete Fourier Transform (DFT) of signals. It provides tools to upload audio files, create signals by combining sinusoidal waves, and analyze these signals in the frequency domain.
 
 ## Getting Started
-To run the server locally, navigate to the `\Server` directory and execute the following command:
+To run the server locally, navigate to the `/Server` directory and execute the following command:
 ```bash
 docker compose up
 ````

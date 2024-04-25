@@ -1,4 +1,4 @@
-![image](https://github.com/parnianrazavipour/DFT_Analysis/assets/79265335/7375d5a7-0dfc-4506-af85-d03d5008d867)![image](https://github.com/parnianrazavipour/DFT_Analysis/assets/79265335/bcbf6a32-8e27-44e7-a5ac-89c620bbea57)# Building a web application to visualize DFT
+Building a web application to visualize DFT
 
 ## Introduction
 This web application allows users to visualize the Discrete Fourier Transform (DFT) of signals. It provides tools to upload audio files, create signals by combining sinusoidal waves, and analyze these signals in the frequency domain.

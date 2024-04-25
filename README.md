@@ -1,4 +1,4 @@
-Building a web application to visualize DFT
+# Building a web application to visualize DFT
 
 ## Introduction
 This web application allows users to visualize the Discrete Fourier Transform (DFT) of signals. It provides tools to upload audio files, create signals by combining sinusoidal waves, and analyze these signals in the frequency domain.

@@ -61,15 +61,11 @@ def upload():
 @main.route('/figures', methods=['GET'])
 def figures():
     if 'waves' in session and session['waves'] and ('current_signal' in session) and session['current_signal'] :
-        signal, rate, name = session['current_signal']
-        signal = np.array(signal)
+        rate, name = session['current_signal']
         # signal, rate = create_combined_signal(session['waves'])
         filename = "combined_signal_"+name+".wav"
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        from scipy.io.wavfile import write
-
-        # sf.write(file_path, signal, rate)
-        write(file_path, rate, signal)
+        # signal, rate = load_audio(file_path)
         
         time_domain_image, frequency_domain_image = process_file(file_path)
         return render_template('figures.html', time_image=time_domain_image, freq_image=frequency_domain_image)
@@ -105,7 +101,12 @@ def process(filename):
 @main.route('/process_xcorr', methods=['GET'])
 def process_xcorr():
     if 'current_signal' in session and session['current_signal'] :
-        signal, rate , name  = session['current_signal']  
+        rate , name  = session['current_signal']  
+        filename = "combined_signal_"+name+".wav"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        signal, rate = load_audio(file_path)
+
+
         signal = np.array(signal)
         
         plot_path = os.path.join(app.config['STATIC_FOLDER'], 'signal_created_xcorr_'+name+'.png')
@@ -166,7 +167,15 @@ def create_signal():
         print("last signal created:", session['waves'])
         signal, rate = create_combined_signal(session['waves'])
         name = datetime.now().strftime("%Y%m%d%H%M%S%f")
-        session['current_signal'] = (signal.tolist(), rate, name)
+        session['current_signal'] = (rate, name)
+
+        filename = "combined_signal_"+name+".wav"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        from scipy.io.wavfile import write
+
+        # sf.write(file_path, signal, rate)
+        write(file_path, rate, signal)
+        
         return jsonify({'signal': signal.tolist(), 'success': True})
     return jsonify({'error': 'No waves to process', 'success': False}), 400
 
